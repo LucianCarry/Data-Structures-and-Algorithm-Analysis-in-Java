@@ -1,0 +1,413 @@
+/**
+ * 实现RandomAccess 可快速访问
+ * 实现Cloneable 可克隆
+ * 实现Serializable 可序列化
+ * @author hello
+ * 2016-7-14 下午3:58:39
+ * @param <E>
+ */
+public class MyArrayList<E> extends AbstractList<E>
+implements List<E>, RandomAccess, Cloneable, java.io.Serializable
+{
+	private static final long serialVersionUID = 8683452581122892189L;
+
+	
+	private static final Collection<? extends Integer> ArrayList = null;
+	
+	private transient Object[] elementData;//定义一个数组 不使用序列化
+
+	private int size;//数组元素个数
+	/**
+	 * 第一个构造方法：生成一个list 长度是用户直接定义的
+	 * @param initialCapacity 用户自己定义的数组长度
+	 */
+	public MyArrayList(int initialCapacity) {
+		super();
+		if (initialCapacity < 0)
+			throw new IllegalArgumentException("参数传入错误异常,传入的参数不能小于0，你的传入参数是: "+
+					initialCapacity);
+		this.elementData = new Object[initialCapacity];
+	}
+	/**
+	 * 第二个构造方法 长度默认为10
+	 */
+	public MyArrayList() {
+		this(10);
+	}
+	/**
+	 * 第三个构造方法 创建一个包含collection的arraylist
+	 * @param c
+	 */
+	public MyArrayList(Collection<? extends E> c) {
+		elementData = c.toArray();
+		size = elementData.length;
+		// c.toArray might (incorrectly) not return Object[] (see 6260652)
+		if (elementData.getClass() != Object[].class)
+			elementData = Arrays.copyOf(elementData, size, Object[].class);
+	}
+	/**
+	 * 调整底层的数组容量与当前元素大小一样 节省空间
+	 */
+	public void trimToSize() {
+		modCount++;
+		int oldCapacity = elementData.length;
+		if (size < oldCapacity) {
+			elementData = Arrays.copyOf(elementData, size);
+		}
+	}
+	/**
+	 * 调整数组容量 
+	 * @param minCapacity 
+	 */
+	public void ensureCapacity(int minCapacity) {
+		modCount++;
+		int oldCapacity = elementData.length;//获得当前数组的容量
+		if (minCapacity > oldCapacity) {//如果需要调整的数组容量大于当前数组的容量
+			/**Object oldData[] = elementData;为什么要用到oldData[]
+			 * 这是一个牵涉到内存管理的类， 所以要了解内部的问题。 
+			 * 而且为什么这一句还在if的内部，这跟elementData = Arrays.copyOf(elementData, newCapacity); 
+			 * 这句是有关系的，下面这句Arrays.copyOf的实现时新创建了newCapacity大小的内存，
+			 * 然后把老的elementData放入。好像也没有用到oldData，有什么问题呢。
+			 * 问题就在于旧的内存的引用是elementData， elementData指向了新的内存块，
+			 * _____________________________________________________________________
+			 * |如果有一个局部变量oldData变量引用旧的内存块的话，在copy的过程中就会比较安全， |
+			 * |--------------------------------------------------------------------|
+			 * 因为这样证明这块老的内存依然有引用，分配内存的时候就不会被侵占掉，
+			 * 然后copy完成后这个局部变量的生命期也过去了，然后释放才是安全的。
+			 * 不然在copy的的时候万一新的内存或其他线程的分配内存侵占了这块老的内存，而copy还没有结束，这将是个严重的事情。
+			 */
+			Object oldData[] = elementData;
+			int newCapacity = (oldCapacity * 3)/2 + 1;
+			if (newCapacity < minCapacity)//如果新的容量小于定义的数组容量
+				newCapacity = minCapacity;//将定义的容量与新的容量相等 节约空间
+			// minCapacity is usually close to size, so this is a win:
+			elementData = Arrays.copyOf(elementData, newCapacity);//调用copy方法生成新数组
+		}
+	}
+
+	/**
+	 * 
+	 *	返回元素个数
+	 * @return the number of elements in this list
+	 */
+	public int size() {
+		return size;
+	}
+	/**
+	 * 判断是否为空 元素个数为零
+	 */
+	public boolean isEmpty() {
+		return size == 0;
+	}
+
+	/**
+	 * 判断元素是否包含在数组中
+	 */
+	public boolean contains(Object o) {
+		return indexOf(o) >= 0;
+	}
+
+	/**
+	 * 判断是否包含的方法 从0下标开始遍历
+	 */
+	public int indexOf(Object o) {
+		if (o == null) {//如果传入的元素为空
+			for (int i = 0; i < size; i++)
+				if (elementData[i]==null)//如果本身数组为空
+					return i;//返回大于等于0的数
+		} else {//如果传入的元素不为空
+			for (int i = 0; i < size; i++)
+				if (o.equals(elementData[i]))//如果传入的元素与数组元素一样
+					return i;//返回大于等于0的数
+		}
+		return -1;//否则返回-1
+	}
+
+	/**
+	 * 判断是否包含的方法 从最后下标开始遍历
+	 */
+	public int lastIndexOf(Object o) {
+		if (o == null) {
+			for (int i = size-1; i >= 0; i--)
+				if (elementData[i]==null)
+					return i;
+		} else {
+			for (int i = size-1; i >= 0; i--)
+				if (o.equals(elementData[i]))
+					return i;
+		}
+		return -1;
+	}
+
+	/**
+	 * 数组克隆
+	 */
+	public Object clone() {
+		try {
+			@SuppressWarnings("unchecked")
+			MyArrayList<E> v = (MyArrayList<E>) super.clone();
+			v.elementData = Arrays.copyOf(elementData, size);
+			v.modCount = 0;
+			return v;
+		} catch (CloneNotSupportedException e) {
+			throw new InternalError();
+		}
+	}
+
+	/**
+	 * 变成array数组
+	 */
+	public Object[] toArray() {
+		return Arrays.copyOf(elementData, size);
+	}
+
+	/**
+	 * 返回一个包含所有list元素的数组
+	 */
+	public <T> T[] toArray(T[] a) {
+		if (a.length < size)
+			// Make a new array of a's runtime type, but my contents:
+			return (T[]) Arrays.copyOf(elementData, size, a.getClass());
+		System.arraycopy(elementData, 0, a, 0, size);
+		if (a.length > size)
+			a[size] = null;
+		return a;
+	}
+
+	/**
+	 * 根据下标获得元素
+	 */
+	public E get(int index) {
+		RangeCheck(index);
+
+		return (E) elementData[index];
+	}
+
+	/**
+	 * 设置下标的元素值
+	 */
+	public E set(int index, E element) {
+		RangeCheck(index);
+		E oldValue = (E) elementData[index];//
+		elementData[index] = element;
+		return oldValue;
+	}
+
+	/**
+	 * 添加数组元素
+	 */
+	public boolean add(E e) {
+		ensureCapacity(size + 1);  // 添加一个元素 会先调整数组容量已达到符合的容量空间;
+		elementData[size++] = e; //将添加的值放入当前下边元素空间
+		return true;
+	}
+
+	/**
+	 *往已知下标添加元素值 后面的元素值不变 下标+1
+	 */
+	public void add(int index, E element) {
+		if (index > size || index < 0)
+			throw new IndexOutOfBoundsException(
+					"Index: "+index+", Size: "+size);
+
+		ensureCapacity(size+1);  // Increments modCount!!
+		System.arraycopy(elementData, index, elementData, index + 1,
+				size - index);
+		elementData[index] = element;
+		size++;
+	}
+
+	/**
+	 * 根据下标删除元素
+	 */
+	public E remove(int index) {
+		
+		RangeCheck(index);//这里会检查你输入的下标 如果下标长度不符合 会报java.lang.IndexOutOfBoundsException:异常
+
+		modCount++;
+		E oldValue = (E) elementData[index];
+
+		int numMoved = size - index - 1;
+		if (numMoved > 0)//非最后一个元素，直接生成一个新的数组
+			System.arraycopy(elementData, index+1, elementData, index,
+					numMoved);
+		//否则当下标是最后一个元素 直接将最后一个元素置为空 
+		elementData[--size] = null; // Let gc do its work 让垃圾回收处理这项工作
+
+		return oldValue;
+	}
+
+	/**
+	 * 根据元素值删除元素
+	 */
+	public boolean remove(Object o) {
+		if (o == null) {
+			for (int index = 0; index < size; index++)
+				if (elementData[index] == null) {
+					fastRemove(index);
+					return true;
+				}
+		} else {
+			for (int index = 0; index < size; index++)
+				if (o.equals(elementData[index])) {
+					fastRemove(index);
+					return true;
+				}
+		}
+		return false;
+	}
+
+	/**该fastRemove（）方法跳过检查范围并且没有返回值
+	 * Private remove method that skips bounds checking and does not
+	 * return the value removed.
+	 */
+	private void fastRemove(int index) {
+		modCount++;
+		int numMoved = size - index - 1;
+		if (numMoved > 0)
+			System.arraycopy(elementData, index+1, elementData, index,
+					numMoved);
+		elementData[--size] = null; // Let gc do its work
+	}
+
+	/**
+	 * 清空元素值
+	 */
+	public void clear() {
+		modCount++;
+
+		// Let gc do its work
+		for (int i = 0; i < size; i++)
+			elementData[i] = null;
+
+		size = 0;
+	}
+
+	/**
+	 * 将包含collection的list 转换为数组
+	 */
+	public boolean addAll(Collection<? extends E> c) {
+		Object[] a = c.toArray();
+		int numNew = a.length;
+		ensureCapacity(size + numNew);  // Increments modCount
+		System.arraycopy(a, 0, elementData, size, numNew);
+		size += numNew;
+		return numNew != 0;
+	}
+
+	/**
+	 * 添加所有包含将包含collection的list
+	 */
+	public boolean addAll(int index, Collection<? extends E> c) {
+		if (index > size || index < 0)
+			throw new IndexOutOfBoundsException(
+					"Index: " + index + ", Size: " + size);
+
+		Object[] a = c.toArray();
+		int numNew = a.length;
+		ensureCapacity(size + numNew);  // Increments modCount
+
+		int numMoved = size - index;
+		if (numMoved > 0)
+			System.arraycopy(elementData, index, elementData, index + numNew,
+					numMoved);
+
+		System.arraycopy(a, 0, elementData, index, numNew);
+		size += numNew;
+		return numNew != 0;
+	}
+
+	/**
+	 * Removes from this list all of the elements whose index is between
+	 * <tt>fromIndex</tt>, inclusive, and <tt>toIndex</tt>, exclusive.
+	 * Shifts any succeeding elements to the left (reduces their index).
+	 * This call shortens the list by <tt>(toIndex - fromIndex)</tt> elements.
+	 * (If <tt>toIndex==fromIndex</tt>, this operation has no effect.)
+	 *
+	 * @param fromIndex index of first element to be removed
+	 * @param toIndex index after last element to be removed
+	 * @throws IndexOutOfBoundsException if fromIndex or toIndex out of
+	 *              range (fromIndex &lt; 0 || fromIndex &gt;= size() || toIndex
+	 *              &gt; size() || toIndex &lt; fromIndex)
+	 */
+	protected void removeRange(int fromIndex, int toIndex) {
+		modCount++;
+		int numMoved = size - toIndex;
+		System.arraycopy(elementData, toIndex, elementData, fromIndex,
+				numMoved);
+
+		// Let gc do its work
+		int newSize = size - (toIndex-fromIndex);
+		while (size != newSize)
+			elementData[--size] = null;
+	}
+
+	/**
+	 * Checks if the given index is in range.  If not, throws an appropriate
+	 * runtime exception.  This method does *not* check if the index is
+	 * negative: It is always used immediately prior to an array access,
+	 * which throws an ArrayIndexOutOfBoundsException if index is negative.
+	 */
+	private void RangeCheck(int index) {
+		if (index >= size)
+			throw new IndexOutOfBoundsException(
+					"Index: "+index+", Size: "+size);
+	}
+
+	/**
+	 * Save the state of the <tt>ArrayList</tt> instance to a stream (that
+	 * is, serialize it).
+	 *
+	 * @serialData The length of the array backing the <tt>ArrayList</tt>
+	 *             instance is emitted (int), followed by all of its elements
+	 *             (each an <tt>Object</tt>) in the proper order.
+	 */
+	private void writeObject(java.io.ObjectOutputStream s)
+			throws java.io.IOException{
+		// Write out element count, and any hidden stuff
+		int expectedModCount = modCount;
+		s.defaultWriteObject();
+
+		// Write out array length
+		s.writeInt(elementData.length);
+
+		// Write out all elements in the proper order.
+		for (int i=0; i<size; i++)
+			s.writeObject(elementData[i]);
+
+		if (modCount != expectedModCount) {
+			throw new ConcurrentModificationException();
+		}
+
+	}
+
+	/**
+	 * Reconstitute the <tt>ArrayList</tt> instance from a stream (that is,
+	 * deserialize it).
+	 */
+	private void readObject(java.io.ObjectInputStream s)
+			throws java.io.IOException, ClassNotFoundException {
+		// Read in size, and any hidden stuff
+		s.defaultReadObject();
+
+		// Read in array length and allocate array
+		int arrayLength = s.readInt();
+		Object[] a = elementData = new Object[arrayLength];
+
+		// Read in all elements in the proper order.
+		for (int i=0; i<size; i++)
+			a[i] = s.readObject();
+	}
+	public static void main(String[] args) {
+		List<Integer> list = new MyArrayList<Integer>(); 
+		list.add(0);
+		list.add(1);
+		list.add(2);
+		boolean addAll = list.addAll(list);
+		System.out.println(addAll);
+		for (Integer integer : list) {
+			System.out.println(integer);
+		}
+	}
+}
+--------------------------------------------------------------------------------------------------------------
