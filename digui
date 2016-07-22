@@ -1,0 +1,15 @@
+package com.shuju;
+
+public class Digui {
+	public static void main(String[] args) {
+		System.out.println(add(6));
+	}
+	public static int add(int a){
+		if(a!=0){
+			System.out.println(a);
+			return add(a-1);
+		}else{
+			return 0;
+		}
+	}
+}
