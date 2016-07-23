@@ -1,0 +1,311 @@
+package com.shuju.shu;
+
+import java.util.Arrays;
+
+/**  
+ * 简单说下二叉树的结构：
+ *        r
+ * 	              口 root
+ *	   E /  \ E
+ *  left口      口 right
+ *    E/     
+ *    口A 
+ * 有一个唯一的根节点r，左边的左子节点left、A，右边的右子节点right
+ * 边E（实线）与节点N关系：E=N-1(E=4-1=3)
+ * 没有子节点的节点称为树叶；left right 在这可称为树叶。
+ * 深度指的是根节点到节点的路径长，其中根节点深度为0，则left节点深度为1，right深度为1，A节点深度为2.
+ * 高度指的是节点到树叶的长度，所以每个树叶的高度都是0，一棵树的高度指的是根节点到树叶的最长距离.一棵树的深度等于这棵树的高度。
+ * 图中数的高度等于深度=2，left的高度等一1，right的高度等于0，A的高度等于0，r的高度（也就是树的高度等于2，深度也为2）
+ * 
+ * 二叉树的结构简单说就是一个节点最多有两个子节点。
+ * 
+ * 所以说二叉树的数据结构就是：一个节点元素和两个指向其他节点的引用
+ * 
+ * 下面是一个二叉树查找数的类:
+ * 二叉查找树的特点：左边子节点的数永远小于根节点，右边子节点的数永远大于根节点
+ * 
+ * 这个类只有一个属性：root：根节点的引用，可为空。
+ * 这里继承Comparable接口是说明树中的两项是可以比较的，可以调用compara方法进行比较，排序，所以也叫排序树
+ * 
+ * @author heartbeat
+ * 2016-7-21 下午2:56:05
+ */
+
+@SuppressWarnings("unused")
+public class MyBinarySeacherTree<AnyType extends Comparable<? super AnyType> >  {
+	private BinaryNode<AnyType> root;
+	
+	/**
+	 * 初始化根节点为null，也就是创建对象时根节点为null；
+	 */
+	public MyBinarySeacherTree() {
+		root=null;
+	}
+
+	/**
+	 * 元素上传到树中，首先是遍历节点，在当中可以与节点上的元素做比较，如果存在元素，则可以不插入或者
+	 * 执行”更新“，直到遍历到最后一个节点上，将元素插入。
+	 * @see contains()
+	 * @param any 上传的元素
+	 */
+	public void insert(AnyType any){
+		root=insertNode(any,root);
+	}
+	/**
+	 * 将元素插入到合适的节点 所以先对输入的元素做比较
+	 * 相关比较 @see contains();
+	 * @param any
+	 * @param node
+	 * @return
+	 */
+	private BinaryNode<AnyType> insertNode(AnyType any,BinaryNode<AnyType> node){
+		if(node==null){//如果树为null，直接插入根节点
+			return new BinaryNode<AnyType>(any);
+		}
+		//先对输入的元素做比较，如果树中某个节点存在元素，则不插入
+		int result=any.compareTo(node.element);
+		if(result>0){
+			node.rightChile=insertNode(any,node.rightChile);
+		}else if(result<0){
+			node.leftChild=insertNode(any, node.leftChild);
+		}else
+			;//元素已经插入了 就不做任何事了
+		return node;//注意 这里返回的是一个新的根节点，也就是一个新的树
+	}
+	/**
+	 * 移除元素
+	 * 移除元素比较复杂，1.如果元素在树叶节点上，很容易就能删除。2.如果元素不在树叶节点上，
+	 * 					而且还有子节点和父节点的情况：如果右节点找最小的节点， 是很容易就能找到的
+	 * 					在做节点找最小节点，也是很容易找到的，最复杂的就是有两个儿子的节点。
+	 * 
+	 * @param any 移除的元素
+	 */
+	public void remove(AnyType any){
+		root=removeNode(any,root);
+	}
+	
+	private BinaryNode<AnyType> removeNode(AnyType any,BinaryNode<AnyType> node){
+		if(node==null){
+			return node;//返回的是还是当前的树
+		}
+		int result=any.compareTo(node.element);
+		if(result>0){
+			node.rightChile=removeNode(any, node.rightChile);
+		}else if(result<0){
+			node.leftChild=removeNode(any, node.leftChild);
+		}else if(node.leftChild!=null&&node.rightChile!=null){//有两个子节点的情况下，找到右边最小的节点
+			node.element=findMinNode(node.rightChile).element;
+			node.rightChile=removeNode(node.element, node.rightChile);
+		}else
+			node=(node.leftChild!=null)?node.leftChild:node.rightChile;
+		return node;
+	}
+	/**
+	 * ---树的遍历-------------------------------------------------------
+	 * 1.先序遍历，即是先从根节点遍历 再根节点 再右节点
+	 * 2.中序遍历，即是先从左 再根 再右
+	 * 3.后续遍历，即左 右 中
+	 * @throws Exception 
+	 */
+	public void printFirstTree() throws Exception{
+		System.out.println("先序遍历：");
+		if(isEmpty()){
+			System.out.println("this Tree is empty");
+			throw new Exception("this Tree is empty");
+		}
+		else printFirstTree(root);
+	}
+	/**
+	 * 中序遍历
+	 * @throws Exception
+	 */
+	public void printMidTree() throws Exception{
+		System.out.println("中序遍历：");
+		if(isEmpty()){
+			System.out.println("this Tree is empty");
+			throw new Exception("this Tree is empty");
+		}
+		else printMidTree(root);
+	}
+	/**
+	 * 后续遍历
+	 * @throws Exception
+	 */
+	public void printLastTree() throws Exception{
+		System.out.println("后序遍历：");
+		if(isEmpty()){
+			System.out.println("this Tree is empty");
+			throw new Exception("this Tree is empty");
+		}
+		else printLastTree(root);
+	}
+	/**
+	 * 先序遍历的实现
+	 * @param node
+	 */
+	private void printFirstTree(BinaryNode<AnyType> node){
+		if(node!=null){
+			System.out.println(node.element);
+			printFirstTree(node.leftChild);
+			printFirstTree(node.rightChile);
+		}
+	}
+	/**
+	 * 中序遍历的实现
+	 * @param node
+	 */
+	private void printMidTree(BinaryNode<AnyType> node){
+		if(node!=null){
+			printMidTree(node.leftChild);
+			System.out.println(node.element);
+			printMidTree(node.rightChile);
+		}
+	}
+	/**
+	 * 后序遍历的实现
+	 * @param node
+	 */
+	private void printLastTree(BinaryNode<AnyType> node){
+		if(node!=null){
+			printLastTree(node.rightChile);
+			System.out.println(node.element);
+			printLastTree(node.leftChild);
+		}
+	}
+	/**
+	 * 清空
+	 */
+	public void makeEmpty(){
+		root=null;
+	}
+	/**
+	 * 判断是否为空
+	 */
+	public boolean isEmpty(){
+		return root==null;
+	}
+	
+	/**
+	 * 判断树是否包含元素
+	 * @param any
+	 * @return
+	 */
+	public boolean contains(AnyType any){
+		return contains(any,root);
+	}
+	
+	/**
+	 * 判断树是否包含元素的方法
+	 * @param any
+	 * @param root
+	 * @return
+	 */
+	private boolean contains(AnyType any,BinaryNode<AnyType> root){
+		if(root==null)return false;
+		/*
+		 * 做比较 相等返回0 前面大于后面返回1 前面小于后面返回-1
+		 */
+		int result=any.compareTo(root.element);
+		if(result>0){
+			//大部分都使用递归方法 这也是实现二叉树比较重要的方法
+			//如果大于0 表示输入的数大于根节点，在右节点数递归比较
+			return contains(any,root.rightChile);
+		}else if(result<0){
+			//如果小于0 表示输入的数小于根节点，这是一个查找树，在左子节点递归比较
+			return contains(any,root.leftChild);
+		}else 
+			return true;
+	}
+	
+	/**
+	 * 查找最小元素
+	 * @return 最小元素
+	 * @throws Exception null not find element or root is null
+	 */
+	public AnyType findMin() throws Exception{
+		if(isEmpty()){
+			throw new Exception("当前树为null，没有数据");
+		}
+		return findMinNode(root).element;
+	}
+	
+	/**
+	 * 找到最小的那个节点 最小的那个节点肯定是在左节点
+	 * @param node
+	 * @return
+	 */
+	private BinaryNode<AnyType> findMinNode(BinaryNode<AnyType> node){
+		if(node==null){
+			return null;//节点可以为null，所以不用抛出异常
+		}else if(node.leftChild==null){
+			return node;//如果做节点为null，说明根节点为最小节点
+		}else{
+			//这是还是递归查找，体现了递归的重要性（也就是一直往左节点下面找，直到找到最小的值返回）
+			return findMinNode(node.leftChild);
+		}
+	}
+	
+	/**
+	 * 找最大的元素返回
+	 * @return
+	 * @throws Exception
+	 */
+	public AnyType findMax() throws Exception{
+		if(isEmpty()){
+			throw new Exception("当前树为null，没有数据");
+		}
+		return findMaxNode(root).element;
+	}
+	/**
+	 * 找到最大的那个节点 最大的那个节点肯定是在右节点
+	 * @param node
+	 * @return
+	 */
+	private BinaryNode<AnyType> findMaxNode(BinaryNode<AnyType> node){
+		if(node!=null){
+			//最大的节点在右节点上
+			while(node.rightChile!=null){
+				node=node.rightChile;
+			}
+		}
+		return node;
+	}
+	/**
+	 * 二叉树数据（节点）结构(BinaryNode,像链表类中的节点类一样，是一个嵌套类)：
+	 * 三个属性：一个节点元素和两个指向其他节点的引用
+	 * 
+	 */
+	private static class BinaryNode<AnyType>{
+		private AnyType element;//在节点上的元素
+		private BinaryNode<AnyType> leftChild;//左边子节点
+		private BinaryNode<AnyType> rightChile;//右边子节点
+
+		public BinaryNode(AnyType element){
+			this(element,null,null);
+		}
+		public BinaryNode(AnyType element,BinaryNode<AnyType> leftChild,BinaryNode<AnyType> rightChile){
+			this.element=element;
+			this.leftChild=leftChild;
+			this.rightChile=rightChile;
+		}
+	}
+	
+	public static void main(String[] args) throws Exception {
+		MyBinarySeacherTree<Integer> mb = new MyBinarySeacherTree<Integer>();
+		mb.insert(6);
+		mb.insert(2);
+		mb.insert(4);
+		mb.insert(3);
+		mb.insert(5);
+		mb.insert(1);
+		mb.insert(7);
+		mb.insert(6);
+		mb.printFirstTree();
+		System.out.println("--------------");
+		mb.printMidTree();
+		System.out.println("--------------");
+		mb.printLastTree();
+	}
+}
+
+
