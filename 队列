@@ -1,0 +1,1039 @@
+package com.shuju.duilie;
+
+
+/**
+ * 百度定义：队列是一种特殊的线性表，特殊之处在于它只允许在表的前端（front指针）进行删除操作，
+ * 		       而在表的后端（rear指针）进行插入操作，和栈一样，队列是一种操作受限制的线性表。进行插入操作的端称为队尾，进行删除操作的端称为队头。
+ * 顺序循环队列的引入：
+ * 	为什么有顺序循环队列这个东西呢，比如说，在队列中，队列的默认长度（即数组的长度）假如是10，当我插入三个元素的时候，font!=0,rear=10,
+ * 	这种行为称之为假溢出，如果第一个元素出队列，此时的font=0，如果此时在插入元素，则会出现真溢出行为。
+ *	为了解决这种行为发生，有解决的办法，比如在每次出队列的时候，就后续元素往前移动一位，但是这种操作特别耗费资源，因为元素在数组里面移动是特别耗费
+ * 	时间的。那么有什么解决的办法吗？
+ * 顺序循环队列：
+ * 	为充分利用向量空间，克服"假溢出"现象的方法是：将向量空间想象为一个首尾相接的圆环，
+ * 	并称这种向量为循环向量。存储在其中的队列称为循环队列（Circular Queue）。ps:这种循环队列可以以单链表的方式来在实际编程应用中来实现
+ * 
+ * @author heartbeat
+ * 2016-7-26 上午9:14:50
+ */
+
+public class MyQueue {
+	private static int DEFAULT_SIZE=10;
+	private Object[] array=null;
+	private int front,rear,count;//队首、队尾标注和列的大小
+
+	public MyQueue() {
+		array=new Object[DEFAULT_SIZE];
+		front=rear=count=0;
+	}
+	public MyQueue(int index) throws Exception{
+		front=rear=count=0;
+		if(index<count)throw new Exception("参数异常：错误的参数为count:"+index);
+		array=new Object[index];
+	}
+	/**
+	 * 判断队列是否为空，如果队首标注等于队尾标注并且列大小为0则为空
+	 * @return
+	 */
+	public boolean isEmpty(){
+		if((front==rear)&&(0==count)){
+			return true;
+		}else
+			return false;
+	}
+	/**
+	 * 入列，放在队尾
+	 * @param obj
+	 */
+	public void push(Object obj){
+		if((rear==front)&&(count>0)){
+			apend();
+		}
+		array[rear] = obj;
+		rear=(rear+1)%DEFAULT_SIZE;//这是将队尾标注加1，添加到队尾
+		count++;
+	}
+	private void apend(){
+		Object[] newArray=new Object[2*DEFAULT_SIZE];
+		for(int i=0;i<count;i++){
+			newArray[i]=array[(front+i)%DEFAULT_SIZE];//这一步是为了使得加入的元素都添加到队尾
+		}
+		array=newArray;//入队时，这里相对于重新copy了一个新的数组，front为0了，rear等于count，这样就能保证队列的顺序是循环的
+		front = 0;
+		rear =count;
+		DEFAULT_SIZE = 2*DEFAULT_SIZE;
+	}
+	/**
+	 * 出列，返回元素并且删除
+	 * @return
+	 * @throws Exception 
+	 */
+	public Object poll() throws Exception{
+		Object peek = peek();
+		front = (front+1)%DEFAULT_SIZE;//队首往后移一位了，说明之前的队首引用无效，即删除了。
+		count--;
+		return peek;
+	}
+	/**
+	 * 查看队首元素
+	 * @return
+	 * @throws Exception 
+	 */
+	public Object peek() throws Exception{
+		if(0==count){
+			throw new Exception("队列为空,没有元素");
+		}else
+			return array[front];
+	}
+	/**
+	 * 查看队尾元素
+	 * @param args
+	 * @throws Exception
+	 */
+	public Object tail() throws Exception{
+		if(0==count){
+			throw new Exception("队列为空,没有元素");
+		}else
+			return array[count-1];
+	}
+	/**
+	 * 清空队列
+	 */
+	public void clear(){
+		for(int i=0;i<array.length;i++){
+			array[i]=null;
+		}
+		front=rear=count=0;
+	}
+	/**
+	 * 查看元素
+	 * @return
+	 */
+	public String look(){
+		String str="[";
+		for(int i=0;i<count;i++){
+			str=str+array[(front+i)%DEFAULT_SIZE];
+			if(i<count-1){
+				str+=",";
+			}
+		}
+		str+="]";
+		return str;
+	}
+	public static void main(String[] args) throws Exception{		
+		MyQueue mq=new MyQueue();
+		mq.push("tom");
+		mq.push("jerry");
+		mq.push("jeck");
+		String look = mq.look();
+		System.out.println(look);
+	}
+}
+---------------------------------------------------------------------------------------------------------------------------------------------
+package com.shuju.duilie;
+/**
+ * 链式队列：在实际生活中，队列分为两种，一种是线性队列，一种是非线性的。所谓线性队列，指的就是有顺序的元素排列在一起，比如数组结构就是这样的
+ * 		       非线性的队列，即以节点（即引用的形式）储存在内存中，链式队列不会出现溢出现象，但是删除和创建节点效率较低。
+ * 可以参考linkedlist实现来实现linkqueue;
+ * @author heartbeat
+ * 2016-7-26 下午5:11:35
+ */
+public class MyLinkQueue<AnyType> {
+	private Node front;//队列的头节点
+	private Node rear;//队列的尾节点
+	private int size;//节点个数（元素数量）
+	
+	/**
+	 * 空链队列
+	 */
+	public MyLinkQueue() {
+		this.front=null;
+		this.rear=null;
+	}
+	/**
+	 * 指定元素创建队列 front和rear都指向该节点
+	 * @param element
+	 */
+	public MyLinkQueue(AnyType element){
+		front=new Node(element,null);
+		rear=front;
+		size++;
+	}
+	/**
+	 * 获取队列大小
+	 * @return
+	 */
+	public int size(){
+		return size;
+	}
+	/**
+	 * 入队
+	 * @param element
+	 */
+	public void push(AnyType element){
+		//如果队列还是空队列
+		if(front==null&&rear==null){
+			front=new Node(element,null);
+			rear=front;
+		}else{
+			Node newNode=new Node(element,null);//将数据存到一个新的节点上
+			rear.next=newNode;//当前队列的尾节点的下一个节点指向新节点
+			rear=newNode;//新节点作为新的尾节点
+		}
+		size++;
+	}
+	/**
+	 * 出队
+	 * @return
+	 */
+	public AnyType poll(){
+		Node oldFront=front;//先将节点指向首节点
+		front=front.next;//首节点改变引用 为下一点节点（其实是生成了一个新的链表 之前的链表首节点没了）
+		oldFront.next=null;
+		size--;
+		return oldFront.element;
+	}
+	/**
+	 * 查看队首元素 不删除
+	 * @return
+	 */
+	public AnyType peek(){
+		return front.element;
+	}
+	/**
+	 * 查看队尾元素
+	 * @return
+	 */
+	public AnyType tail(){
+		return rear.element;	
+	}
+	/**
+	 * 是否为空
+	 * @return
+	 */
+	public boolean isEmpty(){
+		return size==0;
+	}
+	/**
+	 * 清空
+	 */
+	public void clear(){
+		front=null;
+		rear=null;
+		size=0;
+	}
+	/**
+	 * 查看元素
+	 * @return
+	 */
+	public String look(){
+		StringBuffer sb=new StringBuffer("\tfront\n\t↓\n");
+		for(int i=0;i<size;i++){
+			sb.append("\t"+front.element);
+			front =front.next;
+			if(i<size-1){
+				sb.append("\t\n\t|\n");
+			}
+		}
+		sb.append("\n\t↑\n\tsear");
+		return sb.toString();
+	}
+	class Node{//内部节点类
+		private AnyType element;//存在节点的元素
+		private Node next;//下一节点的引用 
+		
+		public Node() {
+		}
+		public Node(AnyType element,Node next){
+			this.element=element;
+			this.next=next;
+		}
+	}
+	public static void main(String[] args) {
+		MyLinkQueue<Integer> mq = new MyLinkQueue<Integer>();
+		mq.push(1);
+		mq.push(2);
+		mq.push(3);
+		mq.push(4);
+		mq.push(5);
+		System.out.println(mq.look());
+	}
+}
+--------------------------------------------------------------------------------------------------------------------------
+package com.shuju.duilie;
+
+import java.util.AbstractQueue;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Queue;
+import java.util.SortedSet;
+
+
+/**
+ * 百度定义：普通的队列是一种先进先出的数据结构，元素在队列尾追加，而从队列头删除。
+ * 		在优先队列中，元素被赋予优先级。当访问元素时，具有最高优先级的元素最先删除。优先队列具有最高级先出 （largest-in，first-out）的行为特征。
+ * 
+ * 下面是翻译这个类的说明，翻译水平有限，能理解多少是多少吧。
+ * 
+ * 一个无界的优先级队列基于一个优先级堆（其实是一个满的二叉堆，恰好这个堆可以用数组表示，具体可参考数据结构这本书）
+ * An unbounded priority {@linkplain Queue queue} based on a priority heap.
+ * 这些有限队列里的元素依据他们的比较排序起来。或者基于队列的构造方法。。应该是自己定义的比较方法进行排序吧。这取决于你的构造方法。
+ * The elements of the priority queue are ordered according to their
+ * {@linkplain Comparable natural ordering}, or by a {@link Comparator}
+ * provided at queue construction time, depending on which constructor is
+ * used.  
+ * 一个优先队列不允许为null（ 元素），也不允许插入不可以比较的对象（比如String类型不可以和int类型比较），会出现类型转换异常
+ * A priority queue does not permit {@code null} elements.
+ * A priority queue relying on natural ordering also does not permit
+ * insertion of non-comparable objects (doing so may result in
+ * {@code ClassCastException}).
+ *
+ *对指定的排序，头元素是最小的，如果多个头元素都是最小值，只取一个值（应该是这个意思，因为做了元素比较）。
+ * <p>The <em>head</em> of this queue is the <em>least</em> element
+ * with respect to the specified ordering.  If multiple elements are
+ * tied for least value, the head is one of those elements -- ties are
+ * broken arbitrarily. 
+ * 队列的检索操作（出列，删除，返回头元素，和查看）通过头元素，即二叉堆的根节点。
+ *  The queue retrieval operations {@code poll},
+ * {@code remove}, {@code peek}, and {@code element} access the
+ * element at the head of the queue.
+ *一个优先队列是无界的（可扩展元素的），但是在内部可以管理一个数组来控制元素的大小（多少），通常队列的大小就是数组的长度。
+ *当元素被添加到一个优先队列，它（数组）的容量是自增的，这个容量的大小不是指定的（也就是说可以人为指定，不过源代码已经指定好了）
+ * <p>A priority queue is unbounded, but has an internal
+ * <i>capacity</i> governing the size of an array used to store the
+ * elements on the queue.  It is always at least as large as the queue
+ * size.  As elements are added to a priority queue, its capacity
+ * grows automatically.  The details of the growth policy are not
+ * specified.
+ *
+ *这个类和迭代器实现了所有的Connection接口和Iterator接口的方法，迭代器保证了在遍历元素时是有序的。
+ *如果你需要指定自己的排序（比如后续遍历），你可以参考Arrays类里面的一些方法。
+ * <p>This class and its iterator implement all of the
+ * <em>optional</em> methods of the {@link Collection} and {@link
+ * Iterator} interfaces.  The Iterator provided in method {@link
+ * #iterator()} is <em>not</em> guaranteed to traverse the elements of
+ * the priority queue in any particular order. If you need ordered
+ * traversal, consider using {@code Arrays.sort(pq.toArray())}.
+ *
+ *注意，上面的实现不是同步的，多个线程实例会改变这个队列的变化，可使用线程安全代替，可以参考这个类：java.util.concurrent.PriorityBlockingQueue
+ * <p> <strong>Note that this implementation is not synchronized.</strong>
+ * Multiple threads should not access a {@code PriorityQueue}
+ * instance concurrently if any of the threads modifies the queue.
+ * Instead, use the thread-safe {@link
+ * java.util.concurrent.PriorityBlockingQueue} class.
+ *
+ *注意；这个实现里面的方法（offer,poll,remove和add）花费的时间是log型的，非线性的。
+ *线性的花费时间有这些方法（peek,element,size）
+ *言外之意就是： 查询快，增删慢。这也符合二叉树的特点。
+ * <p>Implementation note: this implementation provides
+ * O(log(n)) time for the enqueing and dequeing methods
+ * ({@code offer}, {@code poll}, {@code remove()} and {@code add});
+ * linear time for the {@code remove(Object)} and {@code contains(Object)}
+ * methods; and constant time for the retrieval methods
+ * ({@code peek}, {@code element}, and {@code size}).
+ *
+ * <p>This class is a member of the
+ * <a href="{@docRoot}/../technotes/guides/collections/index.html">
+ * Java Collections Framework</a>.
+ *
+ * @since 1.5
+ * @version 1.16, 04/21/06
+ * @author Josh Bloch, Doug Lea
+ * @param <E> the type of elements held in this collection
+ * 
+ *
+ * 
+ * @author heartbeat
+ * 2016-7-29 上午10:37:39
+ * @param <E>
+ */
+public class MyPriorityQueue<E> extends AbstractQueue<E> implements java.io.Serializable {
+
+	private static final long serialVersionUID = -7720805057305804111L;
+
+	private static final int DEFAULT_INITIAL_CAPACITY = 11;//默认容量
+
+	/**
+	 * 有限队列是一个平衡二叉堆表示的，队列[n]的两个子节点是[2n+1]和[2(n+1)],
+	 * 优先队列是有比较器来排序的，或者通过自然排序，如果比较器为null，在队里的每个节点n和
+	 * 每个n节点的子节点d,存在n<=d,队列不为空的话，最小元素是队列[0].
+	 * Priority queue represented as a balanced binary heap: the two
+	 * children of queue[n] are queue[2*n+1] and queue[2*(n+1)].  The
+	 * priority queue is ordered by comparator, or by the elements'
+	 * natural ordering, if comparator is null: For each node n in the
+	 * heap and each descendant d of n, n <= d.  The element with the
+	 * lowest value is in queue[0], assuming the queue is nonempty.
+	 *
+	 *private transient Object[] queue;
+	 * 一个不被序列化的数组，这个数组是二叉堆的表现：在数组任意位置i，左儿子在位置2i上，右儿子为位置2i+1上，父亲在位置i/2上。
+	 */
+	private transient Object[] queue;
+
+	/**
+	 * 优先队列元素个数，初始化为0
+	 * The number of elements in the priority queue.
+	 */
+	private int size = 0;
+
+	/**
+	 * 比较器，如果队列使用自然排序，则为空
+	 * The comparator, or null if priority queue uses elements'
+	 * natural ordering.
+	 */
+	private final Comparator<? super E> comparator;
+
+	/**
+	 * 优先队列结构被修改的次数，可以参考AbstractList for gory details.细节，（应该是在AbstractList被记录的）
+	 * The number of times this priority queue has been
+	 * <i>structurally modified</i>.  See AbstractList for gory details.
+	 */
+	private transient int modCount = 0;
+
+	//有六个构造方法，可以在创建对象的时候生成不用的优先队列
+	
+	/**1.创建一个有限队列 默认长度是11，通过比较器排序的。（基于构造器3来实现）
+	 * Creates a {@code PriorityQueue} with the default initial
+	 * capacity (11) that orders its elements according to their
+	 * {@linkplain Comparable natural ordering}.
+	 */
+	public MyPriorityQueue() {
+		this(DEFAULT_INITIAL_CAPACITY, null);
+	}
+
+	/**
+	 * 2.创建一个有限队列，长度是指定的，通过比较器排序（基于构造器3来实现）
+	 * Creates a {@code PriorityQueue} with the specified initial
+	 * capacity that orders its elements according to their
+	 * {@linkplain Comparable natural ordering}.
+	 *			初始化队列的长度
+	 * @param initialCapacity the initial capacity for this priority queue
+	 * 			如果指定长度小于1则抛出IllegalArgumentException
+	 * @throws IllegalArgumentException if {@code initialCapacity} is less
+	 *         than 1
+	 */
+	public MyPriorityQueue(int initialCapacity) {
+		this(initialCapacity, null);
+	}
+
+	/**
+	 * 3.创建一个指定容量，并且通过指定比较器排序的队列
+	 * Creates a {@code PriorityQueue} with the specified initial capacity
+	 * that orders its elements according to the specified comparator.
+	 *			初始化队列容量
+	 * @param  initialCapacity the initial capacity for this priority queue
+	 * 			指定比较器的排序来比较
+	 * @param  comparator the comparator that will be used to order this
+	 *         priority queue.  If {@code null}, the {@linkplain Comparable
+	 *         natural ordering} of the elements will be used.
+	 *         如果指定长度小于1则抛出IllegalArgumentException
+	 * @throws IllegalArgumentException if {@code initialCapacity} is
+	 *         less than 1
+	 */
+	public MyPriorityQueue(int initialCapacity,
+			Comparator<? super E> comparator) {
+		// Note: This restriction of at least one is not actually needed,
+		// but continues for 1.5 compatibility
+		if (initialCapacity < 1)
+			throw new IllegalArgumentException();
+		this.queue = new Object[initialCapacity];//其实就是数组实现的
+		this.comparator = comparator;
+	}
+
+	/**
+	 *4.创建一个集合包含元素队列，如果指定的 集合实例是SortedSet或者是其他的PriorityQueue，
+	 *这个优先队列将会按照上面的实例指定的排序来排序的，除此之外，这个优先队列将按照比较器的自然排序来排列这些元素的。
+	 * Creates a {@code PriorityQueue} containing the elements in the
+	 * specified collection.  If the specified collection is an instance of
+	 * a {@link SortedSet} or is another {@code PriorityQueue}, this
+	 * priority queue will be ordered according to the same ordering.
+	 * Otherwise, this priority queue will be ordered according to the
+	 * {@linkplain Comparable natural ordering} of its elements.
+	 *
+	 * @param  c the collection whose elements are to be placed
+	 *         into this priority queue
+	 * @throws ClassCastException if elements of the specified collection
+	 *         cannot be compared to one another according to the priority
+	 *         queue's ordering
+	 * @throws NullPointerException if the specified collection or any
+	 *         of its elements are null
+	 */
+	public MyPriorityQueue(Collection<? extends E> c) {
+		initFromCollection(c);
+		if (c instanceof SortedSet)
+			comparator = (Comparator<? super E>)
+			((SortedSet<? extends E>)c).comparator();
+		else if (c instanceof MyPriorityQueue)
+			comparator = (Comparator<? super E>)
+			((MyPriorityQueue<? extends E>)c).comparator();
+		else {
+			comparator = null;
+			heapify();//好像是重构排序的方法
+		}
+	}
+
+	/**
+	 * 5.通过一个指定的优先队列来创建新队列，新队列的排序是按照指定队列来排序的。
+	 * Creates a {@code PriorityQueue} containing the elements in the
+	 * specified priority queue.  This priority queue will be
+	 * ordered according to the same ordering as the given priority
+	 * queue.
+	 *
+	 * @param  c the priority queue whose elements are to be placed
+	 *         into this priority queue
+	 * @throws ClassCastException if elements of {@code c} cannot be
+	 *         compared to one another according to {@code c}'s
+	 *         ordering
+	 * @throws NullPointerException if the specified priority queue or any
+	 *         of its elements are null
+	 */
+	public MyPriorityQueue(MyPriorityQueue<? extends E> c) {
+		comparator = (Comparator<? super E>)c.comparator();
+		initFromCollection(c);
+	}
+
+	/**
+	 * 6.通过指定的SortedSet（包含元素）来创建队列。
+	 * 这个优先队列的排序是通过SortedSet的排序来指定的。
+	 * Creates a {@code PriorityQueue} containing the elements in the
+	 * specified sorted set.   This priority queue will be ordered
+	 * according to the same ordering as the given sorted set.
+	 *
+	 * @param  c the sorted set whose elements are to be placed
+	 *         into this priority queue
+	 * @throws ClassCastException if elements of the specified sorted
+	 *         set cannot be compared to one another according to the
+	 *         sorted set's ordering
+	 * @throws NullPointerException if the specified sorted set or any
+	 *         of its elements are null
+	 */
+	public MyPriorityQueue(SortedSet<? extends E> c) {
+		comparator = (Comparator<? super E>)c.comparator();
+		initFromCollection(c);
+	}
+
+	/**
+	 * 将给定集合初始化队列数组
+	 * Initializes queue array with elements from the given Collection.
+	 *
+	 * @param c the collection
+	 */
+	private void initFromCollection(Collection<? extends E> c) {
+		Object[] a = c.toArray();
+		// If c.toArray incorrectly doesn't return Object[], copy it.
+		if (a.getClass() != Object[].class)
+			a = Arrays.copyOf(a, a.length, Object[].class);
+		queue = a;
+		size = a.length;
+	}
+
+	/**
+	 * 增加数组容量的方法
+	 * Increases the capacity of the array.
+	 *
+	 * @param minCapacity the desired minimum capacity
+	 */
+	private void grow(int minCapacity) {
+		if (minCapacity < 0) // overflow
+			throw new OutOfMemoryError();
+		int oldCapacity = queue.length;
+		// Double size if small; else grow by 50%
+		int newCapacity = ((oldCapacity < 64)?
+				((oldCapacity + 1) * 2):
+					((oldCapacity / 2) * 3));
+		if (newCapacity < 0) // overflow
+			newCapacity = Integer.MAX_VALUE;
+		if (newCapacity < minCapacity)
+			newCapacity = minCapacity;
+		queue = Arrays.copyOf(queue, newCapacity);
+	}
+
+	/**
+	 * 往指定队列里面插入元素
+	 * Inserts the specified element into this priority queue.
+	 *
+	 * @return {@code true} (as specified by {@link Collection#add})
+	 * @throws ClassCastException if the specified element cannot be
+	 *         compared with elements currently in this priority queue
+	 *         according to the priority queue's ordering
+	 * @throws NullPointerException if the specified element is null
+	 */
+	public boolean add(E e) {
+		return offer(e);
+	}
+
+	/**
+	 * 往指定队列里面插入元素
+	 * Inserts the specified element into this priority queue.
+	 *
+	 * @return {@code true} (as specified by {@link Queue#offer})
+	 * @throws ClassCastException if the specified element cannot be
+	 *         compared with elements currently in this priority queue
+	 *         according to the priority queue's ordering
+	 * @throws NullPointerException if the specified element is null
+	 */
+	public boolean offer(E e) {
+		if (e == null)
+			throw new NullPointerException();
+		modCount++;
+		int i = size;
+		if (i >= queue.length)
+			grow(i + 1);//插入的位置大于队列长度 队列长度+1;
+		size = i + 1;
+		if (i == 0)//第一次插入元素
+			queue[0] = e;
+		else
+			siftUp(i, e);//寻到堆里合适位置插入元素的过程
+		return true;
+	}
+	/**
+	 * 查看队首元素 也就是堆的根元素
+	 */
+	public E peek() {
+		if (size == 0)
+			return null;
+		return (E) queue[0];
+	}
+	/**
+	 * 元素在队列出现的索引位置
+	 * @param o
+	 * @return
+	 */
+	private int indexOf(Object o) {
+		if (o != null) {
+			for (int i = 0; i < size; i++)
+				if (o.equals(queue[i]))
+					return i;
+		}
+		return -1;
+	}
+
+	/**
+	 * 从队列中移除单个实例
+	 */
+	public boolean remove(Object o) {
+		int i = indexOf(o);//找到元素出现的位置
+		if (i == -1)
+			return false;
+		else {
+			removeAt(i);
+			return true;
+		}
+	}
+
+	/**
+	 * Version of remove using reference equality, not equals.
+	 * Needed by iterator.remove.
+	 *
+	 * @param o element to be removed from this queue, if present
+	 * @return {@code true} if removed
+	 */
+	boolean removeEq(Object o) {
+		for (int i = 0; i < size; i++) {
+			if (o == queue[i]) {
+				removeAt(i);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * 是否包含
+	 * Returns {@code true} if this queue contains the specified element.
+	 * More formally, returns {@code true} if and only if this queue contains
+	 * at least one element {@code e} such that {@code o.equals(e)}.
+	 *
+	 * @param o object to be checked for containment in this queue
+	 * @return {@code true} if this queue contains the specified element
+	 */
+	public boolean contains(Object o) {
+		return indexOf(o) != -1;
+	}
+
+	/**
+	 * 队列转换为数组
+	 * Returns an array containing all of the elements in this queue.
+	 * The elements are in no particular order.
+	 *
+	 * <p>The returned array will be "safe" in that no references to it are
+	 * maintained by this queue.  (In other words, this method must allocate
+	 * a new array).  The caller is thus free to modify the returned array.
+	 *
+	 * <p>This method acts as bridge between array-based and collection-based
+	 * APIs.
+	 *
+	 * @return an array containing all of the elements in this queue
+	 */
+	public Object[] toArray() {
+		return Arrays.copyOf(queue, size);
+	}
+
+	/**
+	 * Returns an array containing all of the elements in this queue; the
+	 * runtime type of the returned array is that of the specified array.
+	 * The returned array elements are in no particular order.
+	 * If the queue fits in the specified array, it is returned therein.
+	 * Otherwise, a new array is allocated with the runtime type of the
+	 * specified array and the size of this queue.
+	 *
+	 * <p>If the queue fits in the specified array with room to spare
+	 * (i.e., the array has more elements than the queue), the element in
+	 * the array immediately following the end of the collection is set to
+	 * {@code null}.
+	 *
+	 * <p>Like the {@link #toArray()} method, this method acts as bridge between
+	 * array-based and collection-based APIs.  Further, this method allows
+	 * precise control over the runtime type of the output array, and may,
+	 * under certain circumstances, be used to save allocation costs.
+	 *
+	 * <p>Suppose <tt>x</tt> is a queue known to contain only strings.
+	 * The following code can be used to dump the queue into a newly
+	 * allocated array of <tt>String</tt>:
+	 *
+	 * <pre>
+	 *     String[] y = x.toArray(new String[0]);</pre>
+	 *
+	 * Note that <tt>toArray(new Object[0])</tt> is identical in function to
+	 * <tt>toArray()</tt>.
+	 *
+	 * @param a the array into which the elements of the queue are to
+	 *          be stored, if it is big enough; otherwise, a new array of the
+	 *          same runtime type is allocated for this purpose.
+	 * @return an array containing all of the elements in this queue
+	 * @throws ArrayStoreException if the runtime type of the specified array
+	 *         is not a supertype of the runtime type of every element in
+	 *         this queue
+	 * @throws NullPointerException if the specified array is null
+	 */
+	public <T> T[] toArray(T[] a) {
+		if (a.length < size)
+			// Make a new array of a's runtime type, but my contents:
+			return (T[]) Arrays.copyOf(queue, size, a.getClass());
+		System.arraycopy(queue, 0, a, 0, size);
+		if (a.length > size)
+			a[size] = null;
+		return a;
+	}
+
+	/**
+	 * Returns an iterator over the elements in this queue. The iterator
+	 * does not return the elements in any particular order.
+	 *
+	 * @return an iterator over the elements in this queue
+	 */
+	public Iterator<E> iterator() {
+		return new Itr();
+	}
+
+	private final class Itr implements Iterator<E> {
+		/**
+		 * Index (into queue array) of element to be returned by
+		 * subsequent call to next.
+		 */
+		private int cursor = 0;
+
+		/**
+		 * Index of element returned by most recent call to next,
+		 * unless that element came from the forgetMeNot list.
+		 * Set to -1 if element is deleted by a call to remove.
+		 */
+		private int lastRet = -1;
+
+		/**
+		 * A queue of elements that were moved from the unvisited portion of
+		 * the heap into the visited portion as a result of "unlucky" element
+		 * removals during the iteration.  (Unlucky element removals are those
+		 * that require a siftup instead of a siftdown.)  We must visit all of
+		 * the elements in this list to complete the iteration.  We do this
+		 * after we've completed the "normal" iteration.
+		 *
+		 * We expect that most iterations, even those involving removals,
+		 * will not need to store elements in this field.
+		 */
+		private ArrayDeque<E> forgetMeNot = null;
+
+		/**
+		 * Element returned by the most recent call to next iff that
+		 * element was drawn from the forgetMeNot list.
+		 */
+		private E lastRetElt = null;
+
+		/**
+		 * The modCount value that the iterator believes that the backing
+		 * Queue should have.  If this expectation is violated, the iterator
+		 * has detected concurrent modification.
+		 */
+		private int expectedModCount = modCount;
+
+		public boolean hasNext() {
+			return cursor < size ||
+					(forgetMeNot != null && !forgetMeNot.isEmpty());
+		}
+
+		public E next() {
+			if (expectedModCount != modCount)
+				throw new ConcurrentModificationException();
+			if (cursor < size)
+				return (E) queue[lastRet = cursor++];
+			if (forgetMeNot != null) {
+				lastRet = -1;
+				lastRetElt = forgetMeNot.poll();
+				if (lastRetElt != null)
+					return lastRetElt;
+			}
+			throw new NoSuchElementException();
+		}
+
+		public void remove() {
+			if (expectedModCount != modCount)
+				throw new ConcurrentModificationException();
+			if (lastRet != -1) {
+				E moved = MyPriorityQueue.this.removeAt(lastRet);
+				lastRet = -1;
+				if (moved == null)
+					cursor--;
+				else {
+					if (forgetMeNot == null)
+						forgetMeNot = new ArrayDeque<E>();
+					forgetMeNot.add(moved);
+				}
+			} else if (lastRetElt != null) {
+				MyPriorityQueue.this.removeEq(lastRetElt);
+				lastRetElt = null;
+			} else {
+				throw new IllegalStateException();
+			}
+			expectedModCount = modCount;
+		}
+	}
+
+	public int size() {
+		return size;
+	}
+
+	/**
+	 * Removes all of the elements from this priority queue.
+	 * The queue will be empty after this call returns.
+	 */
+	public void clear() {
+		modCount++;
+		for (int i = 0; i < size; i++)
+			queue[i] = null;
+		size = 0;
+	}
+/**
+ * 出队 
+ */
+	public E poll() {
+		if (size == 0)
+			return null;
+		int s = --size;
+		modCount++;
+		E result = (E) queue[0];
+		E x = (E) queue[s];
+		queue[s] = null;
+		if (s != 0)
+			siftDown(0, x);
+		return result;
+	}
+
+	//下面的也没什么说的了。。。
+	/**
+	 * Removes the ith element from queue.
+	 *
+	 * Normally this method leaves the elements at up to i-1,
+	 * inclusive, untouched.  Under these circumstances, it returns
+	 * null.  Occasionally, in order to maintain the heap invariant,
+	 * it must swap a later element of the list with one earlier than
+	 * i.  Under these circumstances, this method returns the element
+	 * that was previously at the end of the list and is now at some
+	 * position before i. This fact is used by iterator.remove so as to
+	 * avoid missing traversing elements.
+	 */
+	private E removeAt(int i) {
+		assert i >= 0 && i < size;
+		modCount++;
+		int s = --size;
+		if (s == i) // 位置在最后 就删除最后一个元素
+			queue[i] = null;
+		else {
+			E moved = (E) queue[s];//得到要删除的元素
+			queue[s] = null;//将其置为null
+			siftDown(i, moved);
+			if (queue[i] == moved) {
+				siftUp(i, moved);
+				if (queue[i] != moved)
+					return moved;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Inserts item x at position k, maintaining heap invariant by
+	 * promoting x up the tree until it is greater than or equal to
+	 * its parent, or is the root.
+	 *
+	 * To simplify and speed up coercions and comparisons. the
+	 * Comparable and Comparator versions are separated into different
+	 * methods that are otherwise identical. (Similarly for siftDown.)
+	 *
+	 * @param k the position to fill
+	 * @param x the item to insert
+	 */
+	private void siftUp(int k, E x) {
+		if (comparator != null)
+			siftUpUsingComparator(k, x);
+		else
+			siftUpComparable(k, x);
+	}
+
+	private void siftUpComparable(int k, E x) {
+		Comparable<? super E> key = (Comparable<? super E>) x;
+		while (k > 0) {
+			int parent = (k - 1) >>> 1;
+			Object e = queue[parent];
+			if (key.compareTo((E) e) >= 0)
+				break;
+			queue[k] = e;
+			k = parent;
+		}
+		queue[k] = key;
+	}
+
+	private void siftUpUsingComparator(int k, E x) {
+		while (k > 0) {
+			int parent = (k - 1) >>> 1;//父节点的位置
+		Object e = queue[parent];//父元素（父节点上的元素，这是我自己起的名字）
+		if (comparator.compare(x, (E) e) >= 0)//一种大小比较的规则，找到在堆里的一个合适的位置,这里是如果比父元素大,停止循环
+			break;
+		queue[k] = e;
+		k = parent;
+		}
+		queue[k] = x;
+	}
+
+	/**
+	 * Inserts item x at position k, maintaining heap invariant by
+	 * demoting x down the tree repeatedly until it is less than or
+	 * equal to its children or is a leaf.
+	 *
+	 * @param k the position to fill
+	 * @param x the item to insert
+	 */
+	private void siftDown(int k, E x) {
+		if (comparator != null)
+			siftDownUsingComparator(k, x);
+		else
+			siftDownComparable(k, x);
+	}
+
+	private void siftDownComparable(int k, E x) {
+		Comparable<? super E> key = (Comparable<? super E>)x;
+		int half = size >>> 1;        // loop while a non-leaf
+		while (k < half) {
+			int child = (k << 1) + 1; // assume left child is least
+			Object c = queue[child];
+			int right = child + 1;
+			if (right < size &&
+					((Comparable<? super E>) c).compareTo((E) queue[right]) > 0)
+				c = queue[child = right];
+			if (key.compareTo((E) c) <= 0)
+				break;
+			queue[k] = c;
+			k = child;
+		}
+		queue[k] = key;
+	}
+
+	private void siftDownUsingComparator(int k, E x) {
+		int half = size >>> 1;
+			while (k < half) {
+				int child = (k << 1) + 1;
+				Object c = queue[child];
+				int right = child + 1;
+				if (right < size &&
+						comparator.compare((E) c, (E) queue[right]) > 0)
+					c = queue[child = right];
+				if (comparator.compare(x, (E) c) <= 0)
+					break;
+				queue[k] = c;
+				k = child;
+			}
+			queue[k] = x;
+	}
+
+	/**
+	 * Establishes the heap invariant (described above) in the entire tree,
+	 * assuming nothing about the order of the elements prior to the call.
+	 */
+	private void heapify() {
+		for (int i = (size >>> 1) - 1; i >= 0; i--)
+			siftDown(i, (E) queue[i]);
+	}
+
+	/**
+	 * Returns the comparator used to order the elements in this
+	 * queue, or {@code null} if this queue is sorted according to
+	 * the {@linkplain Comparable natural ordering} of its elements.
+	 *
+	 * @return the comparator used to order this queue, or
+	 *         {@code null} if this queue is sorted according to the
+	 *         natural ordering of its elements
+	 */
+	public Comparator<? super E> comparator() {
+		return comparator;
+	}
+
+	/**
+	 * Saves the state of the instance to a stream (that
+	 * is, serializes it).
+	 *
+	 * @serialData The length of the array backing the instance is
+	 *             emitted (int), followed by all of its elements
+	 *             (each an {@code Object}) in the proper order.
+	 * @param s the stream
+	 */
+	private void writeObject(java.io.ObjectOutputStream s)
+			throws java.io.IOException{
+		// Write out element count, and any hidden stuff
+		s.defaultWriteObject();
+
+		// Write out array length, for compatibility with 1.5 version
+		s.writeInt(Math.max(2, size + 1));
+
+		// Write out all elements in the "proper order".
+		for (int i = 0; i < size; i++)
+			s.writeObject(queue[i]);
+	}
+
+	/**
+	 * Reconstitutes the {@code PriorityQueue} instance from a stream
+	 * (that is, deserializes it).
+	 *
+	 * @param s the stream
+	 */
+	private void readObject(java.io.ObjectInputStream s)
+			throws java.io.IOException, ClassNotFoundException {
+		// Read in size, and any hidden stuff
+		s.defaultReadObject();
+
+		// Read in (and discard) array length
+		s.readInt();
+
+		queue = new Object[size];
+
+		// Read in all elements.
+		for (int i = 0; i < size; i++)
+			queue[i] = s.readObject();
+
+		// Elements are guaranteed to be in "proper order", but the
+		// spec has never explained what that might be.
+		heapify();
+	}
+}
